@@ -30,6 +30,8 @@ WEBVIEW_API void webview_set_minimized(webview_t w, int minimize);
 WEBVIEW_API void webview_set_visible(webview_t w, int minimize);
 WEBVIEW_API void webview_set_color(webview_t w, uint8_t r, uint8_t g,
                                    uint8_t b, uint8_t a);
+WEBVIEW_API void webview_set_zoom_level(webview_t w, const double percentage);
+WEBVIEW_API void webview_set_html(webview_t w, const char *html);
 WEBVIEW_API void webview_dispatch(webview_t w, webview_dispatch_fn fn,
                                   void *arg);
 WEBVIEW_API void webview_exit(webview_t w);
@@ -37,6 +39,7 @@ WEBVIEW_API void webview_debug(const char *format, ...);
 WEBVIEW_API void webview_print_log(const char *s);
 
 WEBVIEW_API void* webview_get_user_data(webview_t w);
+WEBVIEW_API void* webview_get_window_handle(webview_t w);
 WEBVIEW_API webview_t webview_new(const char* title, const char* url, int width, int height, int resizable, int debug, int frameless, int visible, int min_width, int min_height, webview_external_invoke_cb_t external_invoke_cb, void* userdata);
 WEBVIEW_API void webview_free(webview_t w);
 WEBVIEW_API void webview_destroy(webview_t w);

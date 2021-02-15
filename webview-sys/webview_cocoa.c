@@ -519,7 +519,7 @@ WEBVIEW_API int webview_init(webview_t w) {
 
   title = objc_msgSend(get_nsstring("Quit "),
                        sel_registerName("stringByAppendingString:"), appName);
-  item = create_menu_item(title, "terminate:", "q");
+  item = create_menu_item(title, wv->frameless ? "terminate:" : "close", "q");
   objc_msgSend(appMenu, sel_registerName("addItem:"), item);
 
   objc_msgSend(objc_msgSend((id)objc_getClass("NSApplication"),
@@ -643,6 +643,17 @@ WEBVIEW_API void webview_set_color(webview_t w, uint8_t r, uint8_t g,
   objc_msgSend(wv->priv.window,
                sel_registerName("setTitlebarAppearsTransparent:"), 1);
 }
+
+WEBVIEW_API void webview_set_zoom_level(webview_t w, const double percentage) {
+    // Ignored on Cocoa
+}
+
+WEBVIEW_API void webview_set_html(webview_t w, const char *html) {
+    struct cocoa_webview* wv = (struct cocoa_webview*)w;
+    objc_msgSend(wv->priv.window, sel_registerName("loadHTMLString:"),
+                 get_nsstring(html));
+}
+
 static void webview_dispatch_cb(void *arg) {
   struct webview_dispatch_arg *context = (struct webview_dispatch_arg *)arg;
   (context->fn)(context->w, context->arg);

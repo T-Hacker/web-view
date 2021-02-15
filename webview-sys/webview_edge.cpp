@@ -106,10 +106,10 @@ public:
         HINSTANCE hInstance = GetModuleHandle(nullptr);
 
         HICON winresIcon = (HICON)LoadImage(
-            hInstance, 
-            (LPWSTR)(1), 
-            IMAGE_ICON, 
-            0, 
+            hInstance,
+            (LPWSTR)(1),
+            IMAGE_ICON,
+            0,
             0,
             LR_DEFAULTSIZE
         );
@@ -277,8 +277,9 @@ public:
                         SWP_NOZORDER | SWP_NOACTIVATE | SWP_FRAMECHANGED);
         }
     }
+
     void set_minimized(bool minimize)
-    {   
+    {
         bool is_minimized = IsIconic(this->m_window);
         if (is_minimized == minimize) {
             set_maximized(true);
@@ -380,7 +381,7 @@ LRESULT CALLBACK WebviewWndProc(HWND hwnd, UINT msg, WPARAM wp, LPARAM lp)
             lpMMI->ptMinTrackSize.x = w->get_min_width();
             lpMMI->ptMinTrackSize.y = w->get_min_height();
         }
-        
+
         break;
     }
 
@@ -432,7 +433,6 @@ public:
 
     void navigate(const char* url)
     {
-
         std::string html = html_from_uri(url);
         if (html != "") {
             m_webview.NavigateToString(winrt::to_hstring(html.c_str()));
@@ -440,6 +440,10 @@ public:
             Uri uri(winrt::to_hstring(url));
             m_webview.Navigate(uri);
         }
+    }
+    void set_html(const char* html)
+    {
+        m_webview.NavigateToString(winrt::to_hstring(html));
     }
     void init(const char* js)
     {
@@ -545,6 +549,14 @@ WEBVIEW_API void webview_set_color(webview_t w, uint8_t r, uint8_t g,
     static_cast<webview::webview*>(w)->set_color(r, g, b, a);
 }
 
+WEBVIEW_API void webview_set_zoom_level(webview_t w, const double percentage) {
+    // Ignored on EdgeHTML
+}
+
+WEBVIEW_API void webview_set_html(webview_t w, const char *html) {
+    static_cast<webview::webview*>(w)->set_html(html);
+}
+
 WEBVIEW_API void webview_dispatch(webview_t w, webview_dispatch_fn fn,
                                   void *arg)
 {
@@ -570,6 +582,11 @@ WEBVIEW_API void webview_print_log(const char *s)
 WEBVIEW_API void* webview_get_user_data(webview_t w)
 {
     return static_cast<webview::webview*>(w)->get_user_data();
+}
+
+WEBVIEW_API void* webview_get_window_handle(webview_t w)
+{
+    return static_cast<webview::webview*>(w)->window();
 }
 
 WEBVIEW_API webview_t webview_new(

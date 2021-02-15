@@ -57,6 +57,11 @@ WEBVIEW_API void* webview_get_user_data(webview_t w) {
 	return wv->userdata;
 }
 
+WEBVIEW_API void* webview_get_window_handle(webview_t w) {
+  struct mshtml_webview* wv = (struct mshtml_webview*)w;
+	return wv->hwnd;
+}
+
 static inline BSTR webview_to_bstr(const char *s) {
   DWORD size = MultiByteToWideChar(CP_UTF8, 0, s, -1, 0, 0);
   BSTR bs = SysAllocStringLen(0, size);
@@ -98,7 +103,7 @@ static int webview_fix_ie_compat_mode() {
 static const TCHAR *classname = "WebView";
 
 WEBVIEW_API webview_t webview_new(
-  const char* title, const char* url, int width, int height, int resizable, int debug, 
+  const char* title, const char* url, int width, int height, int resizable, int debug,
   int frameless, int visible, int min_width, int min_height, webview_external_invoke_cb_t external_invoke_cb, void* userdata) {
 
   if (webview_fix_ie_compat_mode() < 0) {
@@ -120,14 +125,14 @@ WEBVIEW_API webview_t webview_new(
   EnableDpiAwareness();
 
   HICON winresIcon = (HICON)LoadImage(
-      hInstance, 
-      (LPWSTR)(1), 
-      IMAGE_ICON, 
-      0, 
+      hInstance,
+      (LPWSTR)(1),
+      IMAGE_ICON,
+      0,
       0,
       LR_DEFAULTSIZE
   );
-  
+
   WNDCLASSEX wc;
   ZeroMemory(&wc, sizeof(WNDCLASSEX));
   wc.cbSize = sizeof(WNDCLASSEX);
@@ -954,7 +959,7 @@ LRESULT CALLBACK wndproc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
       lpMMI->ptMinTrackSize.x = wv->min_width;
       lpMMI->ptMinTrackSize.y = wv->min_height;
     }
-      
+
     break;
   }
   }
@@ -1134,7 +1139,7 @@ WEBVIEW_API void webview_set_maximized(webview_t w, int maximize) {
     RECT r;
 
     SystemParametersInfoW(SPI_GETWORKAREA, 0, &r, 0);
-    
+
     ShowWindow(wv->hwnd, SW_MAXIMIZE);
     SetWindowPos(wv->hwnd, NULL, r.left, r.top, r.right - r.left,
                 r.bottom - r.top,
@@ -1171,6 +1176,34 @@ WEBVIEW_API void webview_set_color(webview_t w, uint8_t r, uint8_t g,
   struct mshtml_webview* wv = (struct mshtml_webview*)w;
   HBRUSH brush = CreateSolidBrush(RGB(r, g, b));
   SetClassLongPtr(wv->hwnd, GCLP_HBRBACKGROUND, (LONG_PTR)brush);
+}
+
+WEBVIEW_API void webview_set_zoom_level(webview_t w, const double percentage) {
+    struct mshtml_webview* wv = (struct mshtml_webview*)w;
+
+    int OLECMDID_OPTICAL_ZOOM = 63;
+    int OLECMDEXECOPT_DONTPROMPTUSER = 2;
+
+    VARIANT vPercentage;
+
+    VariantInit(&vPercentage);
+
+    vPercentage.vt = VT_R8;
+    vPercentage.dblVal = percentage;
+
+    IWebBrowser2 *webBrowser;
+    IOleObject *browser = *wv->browser;
+    if (browser->lpVtbl->QueryInterface(browser, iid_unref(&IID_IWebBrowser2),
+                                        (void **)&webBrowser) == S_OK) {
+        webBrowser->lpVtbl->ExecWB(webBrowser, OLECMDID_OPTICAL_ZOOM, OLECMDEXECOPT_DONTPROMPTUSER, &vPercentage, &vPercentage);
+    }
+}
+
+WEBVIEW_API void webview_set_html(webview_t w, const char *html) {
+    struct mshtml_webview* wv = (struct mshtml_webview*)w;
+    wv->url = html;
+
+    DisplayHTMLPage(wv);
 }
 
 WEBVIEW_API void webview_exit(webview_t w) {

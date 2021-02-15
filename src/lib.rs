@@ -406,6 +406,11 @@ impl<'a, T> WebView<'a, T> {
         &mut self.user_data_wrapper_mut().inner
     }
 
+    /// Window handle (Windows only)
+    pub fn window_handle(&self) -> *mut c_void {
+        unsafe { webview_get_window_handle(self.inner.unwrap()) as _ }
+    }
+
     #[deprecated(note = "Please use exit instead")]
     pub fn terminate(&mut self) {
         self.exit();
@@ -449,6 +454,24 @@ impl<'a, T> WebView<'a, T> {
     pub fn set_color<C: Into<Color>>(&mut self, color: C) {
         let color = color.into();
         unsafe { webview_set_color(self.inner.unwrap(), color.r, color.g, color.b, color.a) }
+    }
+
+    /// Sets the page native browser zoom level.
+    pub fn set_zoom_level(&mut self, percentage: f64) {
+        unsafe { webview_set_zoom_level(self.inner.unwrap(), percentage) }
+    }
+
+    /// Sets the page HTML directly.
+    ///
+    /// # Errors
+    ///
+    /// If `html` contain a nul byte, returns [`Error::NulByte`].
+    ///
+    /// [`Error::NulByte`]: enum.Error.html#variant.NulByte
+    pub fn set_html(&mut self, html: &str) -> WVResult {
+        let html = CString::new(html)?;
+        unsafe { webview_set_html(self.inner.unwrap(), html.as_ptr()) }
+        Ok(())
     }
 
     /// Sets the title displayed at the top of the window.
@@ -495,7 +518,7 @@ impl<'a, T> WebView<'a, T> {
     /// Iterates the event loop. Returns `None` if the view has been closed or terminated.
     pub fn step(&mut self) -> Option<WVResult> {
         unsafe {
-            match webview_loop(self.inner.unwrap(), 0) {
+            match webview_loop(self.inner.unwrap(), 1) {
                 0 => {
                     let closure_result = &mut self.user_data_wrapper_mut().result;
                     match closure_result {
